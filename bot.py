@@ -32,7 +32,10 @@ def home():
 
 
 async def get_connection():
-    return await asyncpg.connect(DATABASE_URL)
+    return await asyncpg.connect(
+        DATABASE_URL,
+        ssl="require"
+    )
 
 
 @dp.message(CommandStart())
