@@ -61,42 +61,6 @@ async def get_connection():
         ssl="require"
     )
 
-@dp.message(F.text == "/admin")
-async def admin_panel(message: Message):
-
-    if str(message.from_user.id) != ADMIN_ID:
-        return
-
-    conn = await get_connection()
-
-    reports = await conn.fetch(
-        """
-        SELECT id, category, description, address, contact, status
-        FROM reports
-        ORDER BY id DESC
-        LIMIT 10
-        """
-    )
-
-    await conn.close()
-
-    if not reports:
-        await message.answer("Немає звернень.")
-        return
-
-    text = "🛠 Останні звернення:\n\n"
-
-    for report in reports:
-        text += (
-            f"№{report['id']}\n"
-            f"Тип: {report['category']}\n"
-            f"Статус: {report['status']}\n"
-            f"Опис: {report['description']}\n"
-            f"Адреса: {report['address'] or 'Не вказано'}\n"
-            f"Контакт: {report['contact'] or 'Не вказано'}\n\n"
-        )
-
-    await message.answer(text)
 
 @dp.message(CommandStart())
 async def start(message: Message):
@@ -196,6 +160,42 @@ async def about(message: Message):
         "Через нього можна залишити скаргу або пропозицію.",
         reply_markup=main_menu
     )
+@dp.message(F.text == "/admin")
+async def admin_panel(message: Message):
+
+    if str(message.from_user.id) != ADMIN_ID:
+        return
+
+    conn = await get_connection()
+
+    reports = await conn.fetch(
+        """
+        SELECT id, category, description, address, contact, status
+        FROM reports
+        ORDER BY id DESC
+        LIMIT 10
+        """
+    )
+
+    await conn.close()
+
+    if not reports:
+        await message.answer("Немає звернень.")
+        return
+
+    text = "🛠 Останні звернення:\n\n"
+
+    for report in reports:
+        text += (
+            f"№{report['id']}\n"
+            f"Тип: {report['category']}\n"
+            f"Статус: {report['status']}\n"
+            f"Опис: {report['description']}\n"
+            f"Адреса: {report['address'] or 'Не вказано'}\n"
+            f"Контакт: {report['contact'] or 'Не вказано'}\n\n"
+        )
+
+    await message.answer(text)
 
 
 @dp.message()
