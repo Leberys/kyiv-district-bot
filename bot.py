@@ -21,9 +21,6 @@ app = Flask(__name__)
 
 user_states = {}
 
-@app.route("/")
-def home():
-    return "Bot is running"
 
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
