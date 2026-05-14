@@ -43,7 +43,7 @@ skip_address_menu = ReplyKeyboardMarkup(
 
 skip_contact_menu = ReplyKeyboardMarkup(
     keyboard=[
-        [KeyboardButton(text="Пропустити контакт")]
+        [KeyboardButton(text="Пропустити")]
     ],
     resize_keyboard=True
 )
@@ -68,7 +68,7 @@ async def start(message: Message):
     await message.answer(
         "Привіт 👋\n\n"
         "Це бот Деснянського району Києва.\n"
-        "Тут ти можеш залишити скаргу, пропозицію або повідомити про проблему.",
+        "Тут ти можеш залишити свою пропозицію або повідомити про проблему.",
         reply_markup=main_menu
     )
 
