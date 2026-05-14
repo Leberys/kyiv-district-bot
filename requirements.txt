@@ -2,3 +2,4 @@ aiogram
 asyncpg
 python-dotenv
 flask
+psycopg2-binary
