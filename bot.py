@@ -330,6 +330,7 @@ async def my_reports(message: Message):
 async def contacts(message: Message):
     await message.answer(
         "Корисні контакти:\n\n"
+        "Приймальня Деснянської районної в місті Києві державної адміністрації (РДА): 0(44)515-66-66\n"
         "КМДА: 1551\n"
         "Поліція: 102\n"
         "Швидка: 103\n"
