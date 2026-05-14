@@ -5,13 +5,16 @@ from flask import Flask
 import asyncio
 import threading
 import os
+import asyncpg
 
 TOKEN = os.getenv("BOT_TOKEN")
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
 app = Flask(__name__)
 
+waiting_for_report = {}
 
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -28,6 +31,10 @@ def home():
     return "Bot is running"
 
 
+async def get_connection():
+    return await asyncpg.connect(DATABASE_URL)
+
+
 @dp.message(CommandStart())
 async def start(message: Message):
     await message.answer(
@@ -40,18 +47,43 @@ async def start(message: Message):
 
 @dp.message(F.text == "📝 Залишити звернення")
 async def create_report(message: Message):
+    waiting_for_report[message.from_user.id] = True
+
     await message.answer(
-        "Добре. Почнемо створення звернення 📝\n\n"
-        "Напиши, будь ласка, коротко, що сталося або яку пропозицію хочеш залишити."
+        "Опиши проблему або пропозицію 📝"
     )
 
 
 @dp.message(F.text == "📋 Мої звернення")
 async def my_reports(message: Message):
-    await message.answer(
-        "Тут буде список твоїх звернень.\n"
-        "Поки ми ще підключаємо базу даних."
+    conn = await get_connection()
+
+    reports = await conn.fetch(
+        """
+        SELECT id, description, status
+        FROM reports
+        WHERE user_id = $1
+        ORDER BY id DESC
+        """,
+        str(message.from_user.id)
     )
+
+    await conn.close()
+
+    if not reports:
+        await message.answer("У тебе поки немає звернень.")
+        return
+
+    text = "📋 Твої звернення:\n\n"
+
+    for report in reports:
+        text += (
+            f"№{report['id']}\n"
+            f"Статус: {report['status']}\n"
+            f"{report['description']}\n\n"
+        )
+
+    await message.answer(text)
 
 
 @dp.message(F.text == "☎️ Корисні контакти")
@@ -68,16 +100,45 @@ async def contacts(message: Message):
 @dp.message(F.text == "ℹ️ Про бот")
 async def about(message: Message):
     await message.answer(
-        "Цей бот створений для збору звернень жителів районів Києва.\n\n"
-        "Через нього можна залишити скаргу, пропозицію або повідомити про проблему."
+        "Бот для звернень жителів Києва."
     )
 
 
 @dp.message()
-async def fallback(message: Message):
+async def handle_messages(message: Message):
+
+    if waiting_for_report.get(message.from_user.id):
+
+        conn = await get_connection()
+
+        await conn.execute(
+            """
+            INSERT INTO reports (
+                user_id,
+                username,
+                description,
+                status
+            )
+            VALUES ($1, $2, $3, $4)
+            """,
+            str(message.from_user.id),
+            message.from_user.username,
+            message.text,
+            "Нове"
+        )
+
+        await conn.close()
+
+        waiting_for_report.pop(message.from_user.id)
+
+        await message.answer(
+            "✅ Звернення успішно створене!"
+        )
+
+        return
+
     await message.answer(
-        "Я тебе почув 👌\n\n"
-        "Скористайся кнопками в меню нижче.",
+        "Скористайся кнопками меню 👇",
         reply_markup=main_menu
     )
 
