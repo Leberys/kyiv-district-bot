@@ -30,7 +30,7 @@ async def echo(message: Message):
     await message.answer(f"Отримано:\n\n{message.text}")
 
 async def start_bot():
-    await dp.start_polling(bot)
+    await dp.start_polling(bot, handle_signals=False)
 
 def run_bot():
     asyncio.run(start_bot())
