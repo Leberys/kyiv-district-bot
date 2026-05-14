@@ -22,6 +22,12 @@ app = Flask(__name__)
 user_states = {}
 
 
+@app.route("/")
+def home():
+    print("HTTP ping received")
+    return "Bot is running"
+
+
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="📝 Залишити звернення")],
@@ -76,11 +82,6 @@ status_menu = ReplyKeyboardMarkup(
 )
 
 
-@app.route("/")
-def home():
-    return "Bot is running"
-
-
 async def get_connection():
     return await asyncpg.connect(
         DATABASE_URL,
@@ -89,7 +90,10 @@ async def get_connection():
 
 
 def is_admin(user_id: int) -> bool:
-    return str(user_id) == str(ADMIN_ID)
+    if not ADMIN_ID:
+        return False
+
+    return str(user_id).strip() == str(ADMIN_ID).strip()
 
 
 async def send_long_message(message: Message, text: str, reply_markup=None):
@@ -98,6 +102,7 @@ async def send_long_message(message: Message, text: str, reply_markup=None):
         return
 
     parts = []
+
     while len(text) > 3900:
         split_index = text.rfind("\n\n", 0, 3900)
 
@@ -204,6 +209,15 @@ async def admin_command(message: Message):
         "🛠 Адмінка відкрита.\n\n"
         "Тут можна переглядати звернення та змінювати їхній статус.",
         reply_markup=admin_menu
+    )
+
+
+@dp.message(Command("debug_admin"))
+async def debug_admin(message: Message):
+    await message.answer(
+        f"Твій Telegram ID: {message.from_user.id}\n"
+        f"ADMIN_ID з env: {ADMIN_ID}\n"
+        f"Адмін доступ: {is_admin(message.from_user.id)}"
     )
 
 
